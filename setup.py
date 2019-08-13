@@ -13,6 +13,7 @@ setup(
     platforms='any',
     packages=find_packages(),
     install_requires=[
-        'django',
+        'SmartDjango>=2.0.3b',
+        'requests'
     ],
 )
