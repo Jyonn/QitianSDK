@@ -20,7 +20,7 @@ class QitianManager:
         self.app_secret = app_secret
 
     @Packing.pack
-    @Analyse.params([Param('res').sub([Param('code'), Param('msg'), Param('body')])])
+    @Analyse.p([Param('res').sub([Param('code'), Param('msg'), Param('body')])])
     def _res_checker(self, res, error: E):
         if res['code'] != BaseError.OK.eid:
             return error(res['msg'])
@@ -48,7 +48,7 @@ class QitianManager:
 
     @Packing.pack
     def get_user_info(self, token):
-        req = requests.post(self.GET_USER_INFO_URL, headers=dict(
+        req = requests.get(self.GET_USER_INFO_URL, headers=dict(
             token=token,
         ), timeout=3)
 
