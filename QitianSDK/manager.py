@@ -1,5 +1,5 @@
 import requests
-from SmartDjango import Packing, ErrorCenter, E, BaseError, Analyse, Param
+from SmartDjango import Excp, ErrorCenter, E, BaseError, Analyse, P
 
 
 class QitianError(ErrorCenter):
@@ -19,14 +19,14 @@ class QitianManager:
         self.app_id = app_id
         self.app_secret = app_secret
 
-    @Packing.pack
-    @Analyse.p([Param('res').sub([Param('code'), Param('msg'), Param('body')])])
+    @Excp.pack
+    @Analyse.p(P('res').as_dict(P('code'), P('msg'), P('body')))
     def _res_checker(self, res, error: E):
         if res['code'] != BaseError.OK.eid:
             return error(res['msg'])
         return res['body']
 
-    @Packing.pack
+    @Excp.pack
     def _req_extractor(self, req: requests.Response, error: E):
         if req.status_code != requests.codes.ok:
             return error
@@ -37,7 +37,7 @@ class QitianManager:
 
         return self._res_checker(res, error)
 
-    @Packing.pack
+    @Excp.pack
     def get_token(self, code):
         req = requests.post(self.GET_TOKEN_URL, json=dict(
             code=code,
@@ -46,7 +46,7 @@ class QitianManager:
 
         return self._req_extractor(req, QitianError.QITIAN_AUTH_FAIL)
 
-    @Packing.pack
+    @Excp.pack
     def get_user_info(self, token):
         req = requests.get(self.GET_USER_INFO_URL, headers=dict(
             token=token,
