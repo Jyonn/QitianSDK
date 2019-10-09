@@ -1,13 +1,11 @@
 import requests
-from SmartDjango import Excp, ErrorCenter, E, BaseError, Analyse, P
+from SmartDjango import Excp, ErrorJar, E, BaseError, Analyse, P
 
 
-class QitianError(ErrorCenter):
+@ErrorJar.pour
+class QitianError:
     QITIAN_GET_USER_INFO_FAIL = E("齐天簿获取用户信息失败", hc=500)
     QITIAN_AUTH_FAIL = E("齐天簿身份认证失败", hc=500)
-
-
-QitianError.register()
 
 
 class QitianManager:
@@ -32,7 +30,7 @@ class QitianManager:
             return error
         try:
             res = req.json()
-        except Exception as err:
+        except Exception:
             return error
 
         return self._res_checker(res, error)
