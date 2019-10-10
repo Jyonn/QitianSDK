@@ -18,7 +18,7 @@ class QitianManager:
         self.app_secret = app_secret
 
     @Excp.pack
-    @Analyse.p(P('res').as_dict(P('code'), P('msg'), P('body')))
+    @Analyse.p(P('res').as_dict('code', 'msg', P('body').set_null()))
     def _res_checker(self, res, error: E):
         if res['code'] != BaseError.OK.eid:
             return error(res['msg'])
