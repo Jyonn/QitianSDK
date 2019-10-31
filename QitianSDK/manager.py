@@ -1,11 +1,12 @@
 import requests
-from SmartDjango import Excp, ErrorJar, E, BaseError, Analyse, P
+from SmartDjango import E, Analyse, P, PDict, Hc
+from smartify import BaseError
 
 
-@ErrorJar.pour
+@E.register()
 class QitianError:
-    QITIAN_GET_USER_INFO_FAIL = E("齐天簿获取用户信息失败", hc=500)
-    QITIAN_AUTH_FAIL = E("齐天簿身份认证失败", hc=500)
+    QITIAN_GET_USER_INFO_FAIL = E("齐天簿获取用户信息失败", hc=Hc.InternalServerError)
+    QITIAN_AUTH_FAIL = E("齐天簿身份认证失败", hc=Hc.InternalServerError)
 
 
 class QitianManager:
@@ -17,25 +18,22 @@ class QitianManager:
         self.app_id = app_id
         self.app_secret = app_secret
 
-    @Excp.pack
-    @Analyse.p(P('res').as_dict('code', 'msg', P('body').set_null()))
+    @Analyse.p(PDict(name='res').set_fields('code', 'msg', P('body').null()))
     def _res_checker(self, res, error: E):
         if res['code'] != BaseError.OK.eid:
-            return error(res['msg'])
+            raise error(res['msg'])
         return res['body']
 
-    @Excp.pack
     def _req_extractor(self, req: requests.Response, error: E):
         if req.status_code != requests.codes.ok:
-            return error
+            raise error
         try:
             res = req.json()
-        except Exception:
-            return error
+        except Exception as err:
+            raise error(debug_message=err)
 
         return self._res_checker(res, error)
 
-    @Excp.pack
     def get_token(self, code):
         req = requests.post(self.GET_TOKEN_URL, json=dict(
             code=code,
@@ -44,7 +42,6 @@ class QitianManager:
 
         return self._req_extractor(req, QitianError.QITIAN_AUTH_FAIL)
 
-    @Excp.pack
     def get_user_info(self, token):
         req = requests.get(self.GET_USER_INFO_URL, headers=dict(
             token=token,
