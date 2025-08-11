@@ -36,7 +36,7 @@ class QitianManager:
         return Obj.raw(response.body)
 
     def get_token(self, code):
-        url = self.host + '/api/oauth/token'
+        url = self.host + '/oauth/token'
 
         resp = requests.post(url, json=dict(
             code=code,
@@ -46,7 +46,7 @@ class QitianManager:
         return self._req_extractor(resp, QitianErrors.QITIAN_REQ_FAIL(target='身份认证'))
 
     def get_user_info(self, token):
-        url = self.host + '/api/user/'
+        url = self.host + '/user/'
 
         resp = requests.get(url, headers=dict(
             token=token,
@@ -55,7 +55,7 @@ class QitianManager:
         return self._req_extractor(resp, QitianErrors.QITIAN_REQ_FAIL(target='用户信息'))
 
     def get_user_phone(self, token):
-        url = self.host + '/api/user/phone/'
+        url = self.host + '/user/phone/'
 
         resp = requests.get(url, headers=dict(
             token=token,

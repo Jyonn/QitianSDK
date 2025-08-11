@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='QitianSDK',
-    version='0.2.1',
+    version='0.2.2',
     keywords=['qitian', 'SmartDjango'],
     description='方便SmartDjango部署的齐天簿SDK',
     long_description='提供齐天簿OAuth2.0接口等',
