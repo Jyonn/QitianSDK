@@ -12,10 +12,14 @@ class QitianErrors:
 
 
 class QitianManager:
-    def __init__(self, app_id, app_secret, host):
+    def __init__(self, app_id, app_secret, host, timeout=3):
         self.app_id = app_id
         self.app_secret = app_secret
         self.host = host
+        self.timeout = timeout
+
+    def set_timeout(self, timeout):
+        self.timeout = timeout
 
     @staticmethod
     def _req_extractor(request: requests.Response, error: Error):
@@ -37,7 +41,7 @@ class QitianManager:
         resp = requests.post(url, json=dict(
             code=code,
             app_secret=self.app_secret,
-        ), timeout=3)
+        ), timeout=self.timeout)
 
         return self._req_extractor(resp, QitianErrors.QITIAN_REQ_FAIL(target='身份认证'))
 
@@ -46,7 +50,7 @@ class QitianManager:
 
         resp = requests.get(url, headers=dict(
             token=token,
-        ), timeout=3)
+        ), timeout=self.timeout)
 
         return self._req_extractor(resp, QitianErrors.QITIAN_REQ_FAIL(target='用户信息'))
 
@@ -55,6 +59,6 @@ class QitianManager:
 
         resp = requests.get(url, headers=dict(
             token=token,
-        ), timeout=3)
+        ), timeout=self.timeout)
 
         return self._req_extractor(resp, QitianErrors.QITIAN_REQ_FAIL(target='用户手机号'))
