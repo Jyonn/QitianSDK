@@ -1,59 +1,60 @@
 import requests
-from SmartDjango import E, Analyse, P, PDict, Hc, BaseError
+from oba import Obj
+from smartdjango import Error, Code, OK
 
 
-@E.register()
-class QitianError:
-    QITIAN_GET_USER_INFO_FAIL = E("齐天簿获取用户信息失败", hc=Hc.InternalServerError)
-    QITIAN_GET_USER_PHONE_FAIL = E("齐天簿获取用户手机号失败", hc=Hc.InternalServerError)
-    QITIAN_AUTH_FAIL = E("齐天簿身份认证失败", hc=Hc.InternalServerError)
-    QITIAN_REQ_FAIL = E("齐天簿请求{0}失败", hc=Hc.InternalServerError)
+@Error.register
+class QitianErrors:
+    QITIAN_GET_USER_INFO_FAIL = Error("齐天簿获取用户信息失败", code=Code.InternalServerError)
+    QITIAN_GET_USER_PHONE_FAIL = Error("齐天簿获取用户手机号失败", code=Code.InternalServerError)
+    QITIAN_AUTH_FAIL = Error("齐天簿身份认证失败", code=Code.InternalServerError)
+    QITIAN_REQ_FAIL = Error("齐天簿请求{target}失败", code=Code.InternalServerError)
 
 
 class QitianManager:
-    QITIAN_HOST = 'https://ssoapi.6-79.cn'
-    GET_TOKEN_URL = '%s/api/oauth/token' % QITIAN_HOST
-    GET_USER_INFO_URL = '%s/api/user/' % QITIAN_HOST
-    GET_USER_PHONE_URL = '%s/api/user/phone' % QITIAN_HOST
-
-    def __init__(self, app_id, app_secret):
+    def __init__(self, app_id, app_secret, host):
         self.app_id = app_id
         self.app_secret = app_secret
+        self.host = host
 
-    @Analyse.p(PDict(name='res').set_fields('code', 'msg', P('body').null()))
-    def _res_checker(self, res, error: E):
-        if res['code'] != BaseError.OK.eid:
-            raise error(append_message=res['msg'])
-        return res['body']
-
-    def _req_extractor(self, req: requests.Response, error: E):
-        if req.status_code != requests.codes.ok:
+    @staticmethod
+    def _req_extractor(request: requests.Response, error: Error):
+        if request.status_code != requests.codes.ok:
             raise error
         try:
-            res = req.json()
+            response = Obj(request.json())
         except Exception as err:
-            raise error(debug_message=err)
+            raise error(details=err)
 
-        return self._res_checker(res, error)
+        if response.identifier != OK.identifier:
+            raise error(append_message=response.user_message)
+
+        return Obj.raw(response.body)
 
     def get_token(self, code):
-        req = requests.post(self.GET_TOKEN_URL, json=dict(
+        url = self.host + '/api/oauth/token'
+
+        resp = requests.post(url, json=dict(
             code=code,
             app_secret=self.app_secret,
         ), timeout=3)
 
-        return self._req_extractor(req, QitianError.QITIAN_REQ_FAIL('身份认证'))
+        return self._req_extractor(resp, QitianErrors.QITIAN_REQ_FAIL(target='身份认证'))
 
     def get_user_info(self, token):
-        req = requests.get(self.GET_USER_INFO_URL, headers=dict(
+        url = self.host + '/api/user/'
+
+        resp = requests.get(url, headers=dict(
             token=token,
         ), timeout=3)
 
-        return self._req_extractor(req, QitianError.QITIAN_REQ_FAIL('用户信息'))
+        return self._req_extractor(resp, QitianErrors.QITIAN_REQ_FAIL(target='用户信息'))
 
     def get_user_phone(self, token):
-        req = requests.get(self.GET_USER_PHONE_URL, headers=dict(
+        url = self.host + '/api/user/phone/'
+
+        resp = requests.get(url, headers=dict(
             token=token,
         ), timeout=3)
 
-        return self._req_extractor(req, QitianError.QITIAN_REQ_FAIL('用户手机号'))
+        return self._req_extractor(resp, QitianErrors.QITIAN_REQ_FAIL(target='用户手机号'))

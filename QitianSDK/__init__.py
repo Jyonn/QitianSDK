@@ -1,6 +1,6 @@
-from QitianSDK.manager import QitianManager, QitianError
+from QitianSDK.manager import QitianManager, QitianErrors
 
 __all__ = [
     QitianManager,
-    QitianError,
+    QitianErrors,
 ]
